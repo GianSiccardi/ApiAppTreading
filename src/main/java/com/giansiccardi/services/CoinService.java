@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giansiccardi.models.Coin;
 import com.giansiccardi.repository.CoinRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,10 @@ public class CoinService {
    private final ObjectMapper objectMapper;
 
     private final CoinRepository coinRepository;
+
+    @Value("$coingecko.api.key")
+    private String API_KEY;
+
 public List<Coin>getCoinList(int page){
 
     String url="https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=10&page="+page;
@@ -67,6 +72,9 @@ public List<Coin>getCoinList(int page){
         RestTemplate restTemplate = new RestTemplate();
         try{
             HttpHeaders headers= new HttpHeaders();
+            headers.set("x-cg-demo-api-key",API_KEY);
+
+
             HttpEntity<String>entity= new HttpEntity<String>("parametes",headers);
             ResponseEntity<String>response=restTemplate.exchange(url, HttpMethod.GET,entity,String.class);
             JsonNode jsonNode=objectMapper.readTree(response.getBody());

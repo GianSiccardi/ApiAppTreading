@@ -25,7 +25,7 @@ public class WalletController {
 
     private final WalletService walletService;
     private final OrderService orderService;
-    private PaymentOrderService paymentOrderService;
+    private final PaymentOrderService paymentOrderService;
 
     private final CustomerServices customerServices;
     @GetMapping
@@ -34,7 +34,7 @@ public class WalletController {
 
         Wallet wallet=walletService.getUserWallet(customer);
 
-        return new ResponseEntity<>(wallet, HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(wallet, HttpStatus.OK);
     }
 
 
@@ -64,6 +64,8 @@ public class WalletController {
 
     }
 
+
+//Este método  recibe el order_id y el payment_id como parámetros. Luego:
     @PutMapping("/deposit")
     public ResponseEntity<Wallet>addMoneyToWallet(@RequestHeader("Authorization")
                                                  String jwt,
@@ -74,15 +76,20 @@ public class WalletController {
         Customer customer=customerServices.findCustomerByJwt(jwt);
 
         Wallet wallet=walletService.getUserWallet(customer);
+        // busca la orden de pago con order_id.
         PaymentOrder order=paymentOrderService.getPaymentOrderById(order_id);
+
+        //Este metodo comprueba si el payment_id es válido y si el estado del pago es exitoso.
         Boolean status=paymentOrderService.ProceedPaymentOrder(order,payment_id);
    if(wallet.getBalance()==null){
        wallet.setBalance(BigDecimal.valueOf(0));
    }
+
+   // Si el pago fue exitoso, se agrega el monto de la orden a la billetera del usuario.
       if(status){
           wallet=walletService.addBalance(wallet,order.getAmount());
       }
-      
+
 
         return new ResponseEntity<>(wallet,HttpStatus.ACCEPTED);
 

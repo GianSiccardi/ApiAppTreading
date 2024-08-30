@@ -1,5 +1,6 @@
 package com.giansiccardi.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.giansiccardi.enums.WithdrawalStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ public class Withdrawal {
 
     @ManyToOne
     private Customer customer;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateTime=LocalDateTime.now();
 
 

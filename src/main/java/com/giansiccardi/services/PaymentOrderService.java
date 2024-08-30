@@ -6,34 +6,32 @@ import com.giansiccardi.enums.PaymentOrderStatus;
 import com.giansiccardi.models.Customer;
 import com.giansiccardi.models.PaymentOrder;
 import com.giansiccardi.repository.PaymentOrderRepository;
-import com.razorpay.Payment;
-import com.razorpay.PaymentLink;
-import com.razorpay.RazorpayClient;
-import com.razorpay.RazorpayException;
+
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 
-import org.json.JSONObject;
+
+import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class PaymentOrderService {
 
 private final PaymentOrderRepository paymentOrderRepository;
 
-@Value("${stripe.api.key}")
+@Value("${stripe.secret.key}")
 private String stripeSecretKey;
 
-@Value("${razorpay.api.key}")
-private String apiKey;
 
-@Value("${razorpay.api.secret}")
-private String apiSecretKey;
+
 
 public PaymentOrder createOrder(Customer customer, Long amount, PaymentMethod paymentMethod){
 PaymentOrder paymentOrder= new PaymentOrder();
@@ -49,106 +47,80 @@ public PaymentOrder getPaymentOrderById(Long id) throws Exception {
 return paymentOrderRepository.findById(id).orElseThrow(()->new Exception("orden no encontrada"));
 }
 
-public Boolean ProceedPaymentOrder(PaymentOrder paymentOrder,String paymentId) throws RazorpayException {
-if(paymentOrder.getStatus()==null){
-    paymentOrder.setStatus(PaymentOrderStatus.PENDING);
-}
+public Boolean ProceedPaymentOrder(PaymentOrder paymentOrder,String paymentId) throws StripeException {
 
-    if(paymentOrder.getStatus().equals((PaymentOrderStatus.PENDING))){
-    if(paymentOrder.getPaymentMethod().equals(PaymentMethod.RAZORPAY)){
-        RazorpayClient razorpayClient= new RazorpayClient(apiKey,apiSecretKey);
-        Payment payment=razorpayClient.payments.fetch(paymentId);
-        Integer amount=payment.get("amount");
-        String status=payment.get("status");
-
-        if(status.equals("captured")){
-            paymentOrder.setStatus(PaymentOrderStatus.SUCCES);
-            return true;
-        }
-        paymentOrder.setStatus(PaymentOrderStatus.FAILED);
-        paymentOrderRepository.save(paymentOrder);
-        return false;
+    log.info("ENTRANDO EN EL METODO PROCEEDPAYMENTORDER");
+try {
+    if (paymentOrder.getStatus() == null) {
+        paymentOrder.setStatus(PaymentOrderStatus.PENDING);
     }
-    paymentOrder.setStatus(PaymentOrderStatus.SUCCES);
-    paymentOrderRepository.save(paymentOrder);
-    return true;
+
+    if (paymentOrder.getStatus().equals((PaymentOrderStatus.PENDING))) {
+
+
+
+        if (paymentOrder.getPaymentMethod().equals((PaymentMethod.STRIPE))) {
+
+            paymentOrder.setStatus(PaymentOrderStatus.SUCCES);
+            paymentOrderRepository.save(paymentOrder);
+            return true;
+        } else {
+
+            paymentOrder.setStatus(PaymentOrderStatus.FAILED); // Considera agregar un estado FAILED si no es exitoso
+            paymentOrderRepository.save(paymentOrder);
+        }
+    } else {
+        log.info("PaymentOrder status is not PENDING: {}", paymentOrder.getStatus());
+        paymentOrder.setStatus(PaymentOrderStatus.SUCCES);
+        paymentOrderRepository.save(paymentOrder);
+        return true;
+    }
+
+}catch (Exception e) {
+    log.error("Unexpected error occurred: {}", e.getMessage());
 }
 return false;
 }
 
-public PaymentResponse createPaypalPaymentLink(Customer customer, Long amount){
-Long Amount=amount*100;
-try{
-    RazorpayClient razorpayClient= new RazorpayClient(apiKey,apiSecretKey);
-    //creamos el json con los parametors del link de pago
 
-    JSONObject paymentLinkRequest= new JSONObject();
-    paymentLinkRequest.put("amount",amount);
-    paymentLinkRequest.put("currency","INR");
-
-    //CREAR EL JSON CON LOS DETALLES DEL CUSTOMER
-
-    JSONObject customerDetails= new JSONObject();
-    customerDetails.put("name",customer.getFullName());
-    customerDetails.put("email",customer.getEmail());
-    paymentLinkRequest.put("customerDetails",customerDetails);
-
-    //Crear JSON de notifiacion
-
-    JSONObject notify = new JSONObject();
-    notify.put("email",true);
-    paymentLinkRequest.put("notify",notify);
-
-    paymentLinkRequest.put("reminder_enable",true);
-
-    paymentLinkRequest.put("callback_url","http://localhost:8080/wallet");
-    paymentLinkRequest.put("callback_method","get");
-
-    //Crear el link de pago para usar en paymentLink.create()
-    PaymentLink payment=razorpayClient.paymentLink.create(paymentLinkRequest);
-
-    String paymentLinkId=payment.get("id");
-    String paymentLinkUrl=payment.get("short_url");
-
-    PaymentResponse response=new PaymentResponse();
-
-    response.setPayment_url(paymentLinkUrl);
-
-    return response;
-} catch (RazorpayException e) {
-    throw new RuntimeException(e);
-}
-
-}
 
     public PaymentResponse createStripePaymentLink(Customer customer, Long amount,Long orderId) throws StripeException {
         Stripe.apiKey=stripeSecretKey;
 
-        SessionCreateParams params=SessionCreateParams.builder()
-                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:8080/wallet?order_id="+orderId)
-                .setCancelUrl("http://localhost:8080/payment/cancel")
-                .addLineItem(SessionCreateParams.LineItem.builder()
+
+        long amountInCents = amount * 100;
+
+        //  Construir los parámetros de la sesión de Stripe
+        SessionCreateParams params = SessionCreateParams.builder()
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD) // Especifica el método de pago, en este caso, tarjeta de crédito (CARD).
+                .setMode(SessionCreateParams.Mode.PAYMENT) // Define el modo de la sesión, está en modo PAYMENT, que significa que se espera un único pago.
+                .setSuccessUrl("http://localhost:8080/wallet?order_id=" + orderId +  "&payment_id={CHECKOUT_SESSION_ID}") // La URL a la que se redirige al usuario después de un pago exitoso. Se incluye el orderId para identificar el pedido.
+                .setCancelUrl("http://localhost:8080/payment/cancel") // La URL a la que se redirige al usuario si cancela el proceso de pago.
+                .addLineItem(SessionCreateParams.LineItem.builder() // Define los artículos que el usuario va a pagar, incluyendo la cantidad, el precio, la moneda, y el nombre del producto.
                         .setQuantity(1L)
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                                 .setCurrency("usd")
-                                .setProductData(SessionCreateParams
-                                        .LineItem
-                                        .PriceData
-                                        .ProductData
-                                        .builder()
-                                        .setName("Top up wallet")
-                                        .build()
-                                ).build()
-                        ).build()
-                ).build();
+                                .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                        .setName("Transfiere a tu billetera")
+                                        .build())
+                                .setUnitAmount(amountInCents) // Aquí defines el precio en centavos.
+                                .build())
+                        .build())
+                .build();
 
+        // Crear la sesión de Stripe
+        //  Llamo al método create de Stripe con los parámetros definidos para crear una
+        //   sesión de pago. La sesión de pago incluye toda la información necesaria para procesar la transacción.
         Session session=Session.create(params);
 
-        System.out.printf("session___" + session);
+
+        // Preparar la respuesta para el cliente
+        System.out.printf("session___" , session);
         PaymentResponse response= new PaymentResponse();
         response.setPayment_url(session.getUrl());
         return response;
     }
+
+
 }
+

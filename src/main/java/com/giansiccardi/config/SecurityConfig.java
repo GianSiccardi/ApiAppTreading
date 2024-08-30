@@ -31,25 +31,19 @@ public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws
     return httpSecurity.build();
 }
 
+
     private CorsConfigurationSource corsConfigurationSource() {
-
-
-        return new CorsConfigurationSource() {
-            @Override
-            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                CorsConfiguration cfg= new CorsConfiguration();
-                cfg.setAllowedOrigins(
-                        Arrays.asList("http://localhost:5173",
-                                "http://localhost:3000")
-                );
-                cfg.setAllowedMethods(Collections.singletonList("*"));
-                cfg.setAllowCredentials(true);
-                cfg.setExposedHeaders(Arrays.asList(("Authorization")));
-                cfg.setAllowedHeaders(Collections.singletonList("*"));
-                cfg.setMaxAge(3600l);
-                return cfg;
-            }
+        return request -> {
+            CorsConfiguration cfg = new CorsConfiguration();
+            cfg.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000")); // Orígenes permitidos
+            cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Métodos permitidos
+            cfg.setAllowCredentials(true); // Permitir el uso de credenciales (cookies, autorizaciones)
+            cfg.setAllowedHeaders(Collections.singletonList("*")); // Permitir todos los encabezados
+            cfg.setExposedHeaders(Arrays.asList("Authorization")); // Exponer ciertos encabezados
+            cfg.setMaxAge(3600L); // Cachear la respuesta de CORS por 1 hora
+            return cfg;
         };
+    }
 }
 
-}
+
