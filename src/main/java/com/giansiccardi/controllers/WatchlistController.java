@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/watchlist")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class WatchlistController {
 
 private final WatchListService watchListService;
