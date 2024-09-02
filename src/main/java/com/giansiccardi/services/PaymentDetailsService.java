@@ -13,12 +13,12 @@ public class PaymentDetailsService {
    private final PaymentsDetailsRepository paymentsDetailsRepository;
 
 
-   public PaymentDetails addPaymentDetails(String accountNumber, String accountHolderName, String ifsc, String bankName, Customer customer){
+   public PaymentDetails addPaymentDetails(String accountNumber, String accountHolderName, String cvu, String bankName, Customer customer){
 
        PaymentDetails paymentDetails= new PaymentDetails();
        paymentDetails.setAccountHolderName(accountHolderName);
        paymentDetails.setAccountNumber(accountNumber);
-       paymentDetails.setIfsc(ifsc);
+       paymentDetails.setCvu(cvu);
        paymentDetails.setBankName(bankName);
        paymentDetails.setCustomer(customer);
 

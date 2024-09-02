@@ -5,12 +5,14 @@ import com.giansiccardi.models.Customer;
 import com.giansiccardi.models.WatchList;
 import com.giansiccardi.repository.WatchListRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class WatchListService {
 
 private final WatchListRepository watchListRepository;
@@ -35,14 +37,20 @@ return watchListRepository.save(watchList);
         }
         return watchListOptional.get();
     }
+
+
+
+
     public Coin addItemToWatchlist(Coin coin ,Customer customer) throws Exception {
-WatchList watchList= findByCustomerWatchList(customer.getId());
+        log.info("ENTRANDO AL METODO addItemToWatchlist");
+        WatchList watchList= findByCustomerWatchList(customer.getId());
 if(watchList.getCoins().contains(coin)){
     watchList.getCoins().remove(coin);
 }
 else watchList.getCoins().add(coin);
- watchListRepository.save(watchList);
 
+ watchListRepository.save(watchList);
+log.info("SE AGREGO CON EXITO A LA LISTA " ,watchList);
  return coin;
     }
 }

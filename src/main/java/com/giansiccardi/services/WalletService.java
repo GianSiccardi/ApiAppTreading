@@ -1,14 +1,18 @@
 package com.giansiccardi.services;
 
+import com.giansiccardi.dto.WalletTransaction;
 import com.giansiccardi.enums.OrderType;
+import com.giansiccardi.enums.WalletTransactionType;
 import com.giansiccardi.models.Customer;
 import com.giansiccardi.models.Order;
 import com.giansiccardi.models.Wallet;
 import com.giansiccardi.repository.WalletRepository;
+import com.giansiccardi.repository.WalletTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -17,14 +21,24 @@ public class WalletService {
 
 
     private final WalletRepository walletRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
 
 
+    public Long generateRandomCVU() {
+        long min = 1000000000L;
+        long max = 9999999999L;
+
+        long cvu = min + (long)(Math.random() * ((max - min) + 1));
+        return cvu;
+    }
 public Wallet getUserWallet(Customer customer){
     Wallet wallet =walletRepository.findByCustomerId(customer.getId());
     if(wallet==null){
         wallet = new Wallet();
+        wallet.setId(generateRandomCVU());
         wallet.setCustomer(customer);
         walletRepository.save(wallet);
+
     }
     return wallet;
 
@@ -60,6 +74,14 @@ walletRepository.save(senderWallet);
 BigDecimal receiverBalancer=receiveWallet.getBalance().add(BigDecimal.valueOf(amount));
 receiveWallet.setBalance(receiverBalancer);
 walletRepository.save(receiveWallet);
+
+    WalletTransaction senderTransaction = new WalletTransaction();
+    senderTransaction.setWallet(senderWallet);
+    senderTransaction.setWalletTransactionType(WalletTransactionType.WAllET_TRANSFER);
+    senderTransaction.setDate(LocalDate.now());
+    senderTransaction.setPurpose("Transferencia realizada");
+    senderTransaction.setAmount(amount);
+    walletTransactionRepository.save(senderTransaction);
 return senderWallet;
 }
 

@@ -22,6 +22,7 @@ public class Withdrawal {
 
     private Long amount;
 
+
     @ManyToOne
     private Customer customer;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

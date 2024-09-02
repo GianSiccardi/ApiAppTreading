@@ -17,15 +17,16 @@ public class PaymentDetails {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(unique = true)
     private String accountNumber;
 
     private String accountHolderName;
 
-    private String ifsc;
+    private String cvu;
 
     private String bankName;
 
     @OneToOne
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)//No se incluirá en la serialización, lo que significa que no aparecerá en la respuesta JSON cuando el objeto se convierta en JSON.
     private Customer customer;
 }

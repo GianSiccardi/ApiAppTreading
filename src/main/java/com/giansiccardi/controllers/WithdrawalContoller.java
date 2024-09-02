@@ -27,7 +27,7 @@ public class WithdrawalContoller {
     
  //   private final WalletTransactionService walletTransactionService;
 
-@PostMapping("/withdrawal/{amount}")
+@PostMapping("/{amount}")
     public ResponseEntity<?>withdrawalRequest(
     @PathVariable Long amount,
     @RequestHeader("Authorization")String jwt

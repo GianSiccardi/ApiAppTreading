@@ -31,21 +31,21 @@ private final CoinService coinService;
     return ResponseEntity.ok(watchList);
 }
 
-@PostMapping("/create")
+/*@PostMapping("/create")
     public ResponseEntity<WatchList>createWatchlist(
             @RequestHeader("Authorization") String jwt
 ) throws Exception {
     Customer customer=customerServices.findCustomerByJwt(jwt);
     WatchList createdWachtlist=watchListService.createWatchList(customer);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdWachtlist);
-}
+}*/
 @GetMapping("/{watchlistId}")
     public ResponseEntity<WatchList>getWatchlistById(
             @PathVariable Long watchlistId )throws Exception {
                 WatchList watchList=watchListService.findById(watchlistId);
     return ResponseEntity.ok(watchList);
 }
-@PatchMapping("/add/coin/{coinId}")
+@PutMapping("/add/coin/{coinId}")
     public ResponseEntity<Coin>addItemToWatchlist(
             @RequestHeader("Authorization")String jwt,
             @PathVariable String coinId

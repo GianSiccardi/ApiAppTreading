@@ -1,5 +1,6 @@
 package com.giansiccardi.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.giansiccardi.enums.WalletTransactionType;
 import com.giansiccardi.models.Wallet;
 import jakarta.persistence.*;
@@ -19,6 +20,7 @@ public class WalletTransaction {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     private Wallet wallet;
     private WalletTransactionType walletTransactionType;
     private LocalDate date;
