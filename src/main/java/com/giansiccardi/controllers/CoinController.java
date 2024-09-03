@@ -38,8 +38,8 @@ public ResponseEntity<List<Coin>>getCoinList(@RequestParam(required = false,name
     }
 
     @GetMapping("/search")
-    public ResponseEntity<JsonNode>searchi(@RequestParam ("q")String keyword) throws JsonProcessingException {
-        String coin=coinService.getCoinDetails(keyword);
+    public ResponseEntity<JsonNode>search(@RequestParam ("q")String keyword) throws JsonProcessingException {
+        String coin=coinService.searchiCoin(keyword);
         JsonNode jsonNode=objectMapper.readTree(coin);
         return ResponseEntity.ok(jsonNode);
 
