@@ -18,6 +18,7 @@ import java.util.List;
 public class Wallet {
 
 @Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;
 @OneToOne
 private Customer customer;
